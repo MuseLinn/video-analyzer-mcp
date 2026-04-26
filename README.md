@@ -29,13 +29,13 @@ git --version
 ### Linux / macOS（Bash）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/MoonshotAI/video-analyzer-mcp/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/main/install.sh | bash
 ```
 
 ### Windows（PowerShell）
 
 ```powershell
-irm https://raw.githubusercontent.com/MoonshotAI/video-analyzer-mcp/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/main/install.ps1 | iex
 ```
 
 > 如果执行策略限制，先运行：`Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
@@ -44,14 +44,14 @@ irm https://raw.githubusercontent.com/MoonshotAI/video-analyzer-mcp/main/install
 
 **Linux / macOS:**
 ```bash
-git clone https://github.com/MoonshotAI/video-analyzer-mcp.git ~/.mcp/video-analyzer
+git clone https://github.com/MuseLinn/video-analyzer-mcp.git ~/.mcp/video-analyzer
 cd ~/.mcp/video-analyzer
 python install.py install
 ```
 
 **Windows:**
 ```powershell
-git clone https://github.com/MoonshotAI/video-analyzer-mcp.git $env:USERPROFILE\.mcp\video-analyzer
+git clone https://github.com/MuseLinn/video-analyzer-mcp.git $env:USERPROFILE\.mcp\video-analyzer
 cd $env:USERPROFILE\.mcp\video-analyzer
 python install.py install
 ```

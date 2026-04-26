@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # Video Analyzer MCP Server — Bash 安装脚本
-# 用法: curl -fsSL https://raw.githubusercontent.com/MoonshotAI/video-analyzer-mcp/main/install.sh | bash
+# 用法: curl -fsSL https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/main/install.sh | bash
 
-REPO_URL="https://github.com/MoonshotAI/video-analyzer-mcp.git"
+REPO_URL="https://github.com/MuseLinn/video-analyzer-mcp.git"
 INSTALL_DIR="$HOME/.mcp/video-analyzer"
 
 info() { echo -e "\033[36m[INFO]\033[0m $*"; }

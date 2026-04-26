@@ -1,5 +1,5 @@
 # Video Analyzer MCP Server — PowerShell 安装脚本
-# 用法: irm https://raw.githubusercontent.com/MoonshotAI/video-analyzer-mcp/main/install.ps1 | iex
+# 用法: irm https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/main/install.ps1 | iex
 
 $ErrorActionPreference = "Stop"
 
@@ -9,7 +9,7 @@ function Write-Warn($msg) { Write-Host "[WARN] $msg" -ForegroundColor Yellow }
 function Write-Error($msg) { Write-Host "[ERR] $msg" -ForegroundColor Red }
 
 $InstallDir = Join-Path $env:USERPROFILE ".mcp" "video-analyzer"
-$RepoUrl = "https://github.com/MoonshotAI/video-analyzer-mcp.git"
+$RepoUrl = "https://github.com/MuseLinn/video-analyzer-mcp.git"
 
 function Test-Command($cmd) {
     $null -ne (Get-Command $cmd -ErrorAction SilentlyContinue)
