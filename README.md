@@ -42,24 +42,19 @@ irm https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/main/install.p
 
 ### 手动克隆安装
 
+如果你不想用一键脚本，可以手动克隆并安装依赖：
+
 **Linux / macOS:**
 ```bash
 git clone https://github.com/MuseLinn/video-analyzer-mcp.git ~/.mcp/video-analyzer
-cd ~/.mcp/video-analyzer
-python install.py install
+pip install mcp
 ```
 
 **Windows:**
 ```powershell
 git clone https://github.com/MuseLinn/video-analyzer-mcp.git $env:USERPROFILE\.mcp\video-analyzer
-cd $env:USERPROFILE\.mcp\video-analyzer
-python install.py install
+pip install mcp
 ```
-
-安装脚本只做以下事情：
-1. 检测系统环境（Python、Git、kimi-cli）
-2. 检查/安装 `mcp` 包
-3. 复制代码到安装目录
 
 **安装脚本不修改任何 Agent 配置文件。** 安装完成后请参照下方"配置"章节手动配置。
 
@@ -77,18 +72,16 @@ curl -fsSL https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/master/
 irm https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/master/install.ps1 | iex
 ```
 
-或者手动更新：
+或者手动更新（进入安装目录执行 git pull）：
 
 **Linux / macOS:**
 ```bash
-cd ~/.mcp/video-analyzer
-python install.py update
+cd ~/.mcp/video-analyzer && git pull
 ```
 
 **Windows:**
 ```powershell
-cd $env:USERPROFILE\.mcp\video-analyzer
-python install.py update
+cd $env:USERPROFILE\.mcp\video-analyzer; git pull
 ```
 
 ### 卸载

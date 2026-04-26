@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Video Analyzer MCP Server — Bash 安装脚本
-# 用法: curl -fsSL https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/main/install.sh | bash
-
 REPO_URL="https://github.com/MuseLinn/video-analyzer-mcp.git"
 INSTALL_DIR="$HOME/.mcp/video-analyzer"
 
@@ -12,9 +9,10 @@ ok()   { echo -e "\033[32m[OK]\033[0m   $*"; }
 warn() { echo -e "\033[33m[WARN]\033[0m $*"; }
 err()  { echo -e "\033[31m[ERR]\033[0m  $*"; }
 
-# 1. 检测必要依赖
-info "检测环境..."
+info "Video Analyzer MCP Server — 安装"
+echo "========================================"
 
+info "检测 Python..."
 if ! command -v python3 &>/dev/null && ! command -v python &>/dev/null; then
     err "未找到 Python。请先安装 Python 3: https://python.org"
     exit 1
@@ -22,19 +20,33 @@ fi
 PYTHON=$(command -v python3 || command -v python)
 ok "Python: $PYTHON"
 
+info "检测 mcp 包..."
+if "$PYTHON" -c "import mcp" 2>/dev/null; then
+    ok "mcp 已安装"
+else
+    warn "mcp 未安装，尝试安装..."
+    if ! "$PYTHON" -m pip install mcp 2>/dev/null; then
+        err "mcp 安装失败，请手动安装: pip install mcp"
+        exit 1
+    fi
+    ok "mcp 安装成功"
+fi
+
+info "检测 git..."
 if ! command -v git &>/dev/null; then
     err "未找到 git。请先安装 Git"
     exit 1
 fi
 ok "git: $(command -v git)"
 
+info "检测 kimi-cli..."
 if ! command -v kimi &>/dev/null; then
-    err "未找到 kimi 命令。Video Analyzer MCP 依赖 kimi-cli，请先安装:"
-    err "   https://github.com/MoonshotAI/kimi-cli"
+    err "未找到 kimi 命令。请先安装 kimi-cli: https://github.com/MoonshotAI/kimi-cli"
     exit 1
 fi
 ok "kimi-cli: $(command -v kimi)"
 
+info "安装代码..."
 if [ -d "$INSTALL_DIR/.git" ]; then
     info "目录已存在，尝试更新..."
     cd "$INSTALL_DIR"
@@ -44,13 +56,18 @@ elif [ -d "$INSTALL_DIR" ]; then
     rm -rf "$INSTALL_DIR"
     git clone "$REPO_URL" "$INSTALL_DIR"
 else
-    info "克隆仓库到 $INSTALL_DIR..."
     git clone "$REPO_URL" "$INSTALL_DIR"
 fi
 
-info "运行安装脚本..."
-cd "$INSTALL_DIR"
-"$PYTHON" install.py install
-
-ok "安装流程完成!"
-info "请参照 README 配置你的 Agent，然后重启 Agent 生效。"
+echo ""
+echo "========================================"
+ok "安装完成!"
+echo ""
+echo "📁 代码位置: $INSTALL_DIR"
+echo ""
+echo "📋 下一步:"
+echo "   1. 参照 README 配置你的 Agent"
+echo "   2. 重启 Agent"
+echo ""
+echo "⚠️  重要: 视频分析耗时较长，请确保 MCP timeout >= 300 秒"
+echo "========================================"

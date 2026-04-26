@@ -1,131 +1,90 @@
 # Video Analyzer MCP Server — PowerShell 安装脚本
-# 用法: irm https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/main/install.ps1 | iex
+# 用法: irm https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/master/install.ps1 | iex
 
 $ErrorActionPreference = "Stop"
 
-function Write-Info($msg) { Write-Host "[INFO] $msg" -ForegroundColor Cyan }
-function Write-Success($msg) { Write-Host "[OK] $msg" -ForegroundColor Green }
-function Write-Warn($msg) { Write-Host "[WARN] $msg" -ForegroundColor Yellow }
-function Write-Error($msg) { Write-Host "[ERR] $msg" -ForegroundColor Red }
-
 $InstallDir = Join-Path $env:USERPROFILE ".mcp" "video-analyzer"
 $RepoUrl = "https://github.com/MuseLinn/video-analyzer-mcp.git"
+
+function Write-Info($msg) { Write-Host "[INFO] $msg" -ForegroundColor Cyan }
+function Write-OK($msg) { Write-Host "[OK]   $msg" -ForegroundColor Green }
+function Write-Warn($msg) { Write-Host "[WARN] $msg" -ForegroundColor Yellow }
+function Write-Err($msg) { Write-Host "[ERR]  $msg" -ForegroundColor Red }
 
 function Test-Command($cmd) {
     $null -ne (Get-Command $cmd -ErrorAction SilentlyContinue)
 }
 
-function Find-Python {
-    $candidates = @("python", "python3", "py")
-    foreach ($c in $candidates) {
-        if (Test-Command $c) {
-            return (Get-Command $c).Source
-        }
+Write-Info "Video Analyzer MCP Server — 安装"
+Write-Host "========================================" -ForegroundColor Cyan
+
+Write-Info "检测 Python..."
+$python = $null
+foreach ($name in @("python3", "python", "py")) {
+    if (Test-Command $name) {
+        $python = (Get-Command $name).Source
+        break
     }
-    Write-Error "未找到 Python。请先安装 Python: https://python.org"
+}
+if (-not $python) {
+    Write-Err "未找到 Python。请先安装 Python 3: https://python.org"
     exit 1
 }
+Write-OK "Python: $python"
 
-function Find-Kimi {
-    if (Test-Command "kimi") {
-        return (Get-Command "kimi").Source
+Write-Info "检测 mcp 包..."
+$hasMcp = & $python -c "import mcp" 2>$null
+if ($hasMcp) {
+    Write-OK "mcp 已安装"
+} else {
+    Write-Warn "mcp 未安装，尝试安装..."
+    & $python -m pip install mcp | Out-Null
+    $hasMcp = & $python -c "import mcp" 2>$null
+    if (-not $hasMcp) {
+        Write-Err "mcp 安装失败，请手动安装: pip install mcp"
+        exit 1
     }
-    Write-Error "未找到 kimi 命令。请先安装 kimi-cli: https://github.com/MoonshotAI/kimi-cli"
+    Write-OK "mcp 安装成功"
+}
+
+Write-Info "检测 git..."
+if (-not (Test-Command "git")) {
+    Write-Err "未找到 git。请先安装 Git: https://git-scm.com/download/win"
     exit 1
 }
+Write-OK "git: $(Get-Command git).Source"
 
-function Install-McpServer {
-    Write-Info "Video Analyzer MCP Server — 安装"
-    Write-Host "========================================" -ForegroundColor Cyan
-
-    # 1. Check Python
-    Write-Info "检测 Python..."
-    $python = Find-Python
-    Write-Success "Python: $python"
-
-    # 2. Check kimi
-    Write-Info "检测 kimi-cli..."
-    $kimi = Find-Kimi
-    Write-Success "kimi: $kimi"
-
-    # 3. Check git
-    if (-not (Test-Command "git")) {
-        Write-Error "未找到 git。请先安装 Git: https://git-scm.com/download/win"
-        exit 1
-    }
-
-    # 4. Clone or update
-    $gitDir = Join-Path $InstallDir ".git"
-    if (Test-Path $gitDir) {
-        Write-Info "目录已存在，尝试更新..."
-        Push-Location $InstallDir
-        git pull
-        Pop-Location
-    } elseif (Test-Path $InstallDir) {
-        Write-Warn "安装目录存在但不是 git repo，将重新克隆..."
-        Remove-Item -Recurse -Force $InstallDir
-        git clone $RepoUrl $InstallDir
-    } else {
-        Write-Info "克隆仓库到 $InstallDir..."
-        git clone $RepoUrl $InstallDir
-    }
-
-    # 5. Run Python install script
-    Write-Info "运行安装脚本..."
-    & $python (Join-Path $InstallDir "install.py") install
-
-    Write-Host ""
-    Write-Host "========================================" -ForegroundColor Green
-    Write-Success "安装完成!"
-    Write-Host ""
-    Write-Host "下一步:" -ForegroundColor Cyan
-    Write-Host "  1. 参照 README 配置你的 Agent"
-    Write-Host "  2. 重启 Agent"
-    Write-Host ""
-    Write-Warn "安装脚本不修改 Agent 配置，请手动配置"
-    Write-Host "========================================" -ForegroundColor Green
+Write-Info "检测 kimi-cli..."
+if (-not (Test-Command "kimi")) {
+    Write-Err "未找到 kimi 命令。请先安装 kimi-cli: https://github.com/MoonshotAI/kimi-cli"
+    exit 1
 }
+Write-OK "kimi-cli: $(Get-Command kimi).Source"
 
-function Update-McpServer {
-    if (-not (Test-Path $InstallDir)) {
-        Write-Error "未找到安装目录。请先运行安装。"
-        exit 1
-    }
-
-    Write-Info "Video Analyzer MCP Server — 更新"
+Write-Info "安装代码..."
+$gitDir = Join-Path $InstallDir ".git"
+if (Test-Path $gitDir) {
+    Write-Info "目录已存在，尝试更新..."
     Push-Location $InstallDir
     git pull
-    $python = Find-Python
-    & $python (Join-Path $InstallDir "install.py") update
     Pop-Location
-}
-
-function Uninstall-McpServer {
-    if (-not (Test-Path $InstallDir)) {
-        Write-Warn "未找到安装目录，无需卸载"
-        return
-    }
-
-    $confirm = Read-Host "确认删除 $InstallDir 吗? [y/N]"
-    if ($confirm -ne "y") {
-        Write-Info "已取消"
-        return
-    }
-
+} elseif (Test-Path $InstallDir) {
+    Write-Warn "安装目录存在但不是 git repo，将重新克隆..."
     Remove-Item -Recurse -Force $InstallDir
-    Write-Success "已卸载"
-    Write-Warn "请手动从 Agent 配置中删除 video-analyzer 相关配置"
+    git clone $RepoUrl $InstallDir
+} else {
+    git clone $RepoUrl $InstallDir
 }
 
-# Parse arguments from $args (when invoked via iex, $args is empty, default to install)
-$Command = if ($args.Count -gt 0) { $args[0] } else { "install" }
-
-switch ($Command) {
-    "install" { Install-McpServer }
-    "update" { Update-McpServer }
-    "uninstall" { Uninstall-McpServer }
-    default {
-        Write-Host "用法: install.ps1 [install|update|uninstall]"
-        Write-Host "默认执行 install"
-    }
-}
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Green
+Write-OK "安装完成!"
+Write-Host ""
+Write-Host "📁 代码位置: $InstallDir" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "📋 下一步:" -ForegroundColor Cyan
+Write-Host "   1. 参照 README 配置你的 Agent"
+Write-Host "   2. 重启 Agent"
+Write-Host ""
+Write-Host "⚠️  重要: 视频分析耗时较长，请确保 MCP timeout >= 300 秒" -ForegroundColor Yellow
+Write-Host "========================================" -ForegroundColor Green
