@@ -10,7 +10,6 @@ Video Analyzer MCP Server — 安装/更新/卸载脚本
 不修改任何 Agent 配置文件。安装完成后请参照 README 手动配置。
 """
 
-import os
 import sys
 import shutil
 import subprocess
@@ -106,13 +105,11 @@ def cmd_install(args):
             sys.exit(1)
     
     print("\n3️⃣  安装代码...")
-    if is_running_from_repo():
+    if REPO_DIR == INSTALL_DIR:
+        print("   ✅ 代码已在安装目录")
+    elif is_running_from_repo():
         print(f"   从 repo 复制到 {INSTALL_DIR}...")
         copy_files()
-    elif REPO_DIR == INSTALL_DIR:
-        print(f"   已在安装目录，跳过复制")
-        if not (INSTALL_DIR / "install.py").exists():
-            shutil.copy2(REPO_DIR / "install.py", INSTALL_DIR / "install.py")
     else:
         copy_files()
     
