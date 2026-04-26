@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
 """
-Video Analyzer MCP Server — 一键安装脚本
+Video Analyzer MCP Server — 安装/更新/卸载脚本
 
-自动检测环境、安装依赖、生成配置。
+用法:
+    python install.py install    # 安装或重新安装（默认）
+    python install.py update     # 从 git 更新
+    python install.py uninstall  # 卸载
+
+不修改任何 Agent 配置文件。安装完成后请参照 README 手动配置。
 """
 
 import os
 import sys
 import shutil
 import subprocess
-import json
+import argparse
 from pathlib import Path
 
 REPO_DIR = Path(__file__).parent.resolve()
@@ -17,37 +22,39 @@ INSTALL_DIR = Path.home() / ".mcp" / "video-analyzer"
 
 
 def run(cmd, **kwargs):
-    """Run a shell command and return stdout."""
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, **kwargs)
     return result.stdout.strip(), result.stderr.strip(), result.returncode
 
 
 def find_kimi_cli():
-    """Find kimi-cli executable and its Python interpreter."""
     kimi_path = shutil.which("kimi")
     if not kimi_path:
-        print("❌ 错误: 未找到 kimi 命令。请先安装 kimi-cli: https://github.com/MoonshotAI/kimi-cli")
+        print("❌ 错误: 未找到 kimi 命令。请先安装 kimi-cli:")
+        print("   https://github.com/MoonshotAI/kimi-cli")
         sys.exit(1)
     
-    # Resolve symlink to find the real python interpreter
     kimi_path = Path(kimi_path).resolve()
-    # Typical path: ~/.local/share/uv/tools/kimi-cli/bin/kimi
     python_path = kimi_path.parent.parent / "bin" / "python"
     if not python_path.exists():
-        # Fallback: try python3 in same directory
-        python_path = shutil.which("python3") or shutil.which("python")
+        python_path = Path(shutil.which("python3") or shutil.which("python"))
     
     return str(kimi_path), str(python_path)
 
 
 def check_mcp_installed(python_path):
-    """Check if mcp package is available."""
     stdout, stderr, rc = run(f'"{python_path}" -c "import mcp; print(mcp.__file__)"')
     return rc == 0
 
 
-def install_files():
-    """Copy source files to install directory."""
+def is_installed():
+    return INSTALL_DIR.exists() and (INSTALL_DIR / "server.py").exists()
+
+
+def is_running_from_repo():
+    return (REPO_DIR / ".git").exists() and REPO_DIR != INSTALL_DIR
+
+
+def copy_files():
     INSTALL_DIR.mkdir(parents=True, exist_ok=True)
     
     src_dir = REPO_DIR / "src" / "video_analyzer"
@@ -57,85 +64,24 @@ def install_files():
             if src.exists():
                 shutil.copy2(src, INSTALL_DIR / f)
     else:
-        # Fallback: copy from repo root
         for f in ["analyzer.py", "server.py"]:
             src = REPO_DIR / f
             if src.exists():
                 shutil.copy2(src, INSTALL_DIR / f)
     
+    shutil.copy2(REPO_DIR / "install.py", INSTALL_DIR / "install.py")
     print(f"✅ 代码已安装到: {INSTALL_DIR}")
 
 
-def detect_agents():
-    """Detect which agents are installed."""
-    agents = []
-    
-    if (Path.home() / ".hermes" / "config.yaml").exists():
-        agents.append("hermes")
-    
-    if (Path.home() / ".opencode" / "opencode.jsonc").exists():
-        agents.append("opencode")
-    
-    if (Path.home() / ".config" / "claude" / "settings.json").exists():
-        agents.append("claude-desktop")
-    
-    return agents
-
-
-def generate_config(agent: str, python_path: str):
-    """Generate MCP config snippet for the given agent."""
-    server_path = INSTALL_DIR / "server.py"
-    
-    if agent == "hermes":
-        return f"""
-# 添加到 ~/.hermes/config.yaml 的 mcp_servers 下:
-
-  video-analyzer:
-    command: "{python_path}"
-    args: ["{server_path}"]
-    timeout: 300  # ⚠️ 视频分析可能耗时数分钟
-"""
-    elif agent == "opencode":
-        return (
-            '# 添加到 ~/.opencode/opencode.jsonc 的 mcp 下:\n\n'
-            '    "video-analyzer": {\n'
-            '      "type": "local",\n'
-            f'      "command": ["{python_path}", "{server_path}"]\n'
-            '    }\n'
-        )
-    elif agent == "claude-desktop":
-        return (
-            '# 添加到 Claude Desktop 的 MCP 配置:\n\n'
-            '{\n'
-            '  "mcpServers": {\n'
-            '    "video-analyzer": {\n'
-            f'      "command": "{python_path}",\n'
-            f'      "args": ["{server_path}"]\n'
-            '    }\n'
-            '  }\n'
-            '}\n'
-        )
-    return ""
-
-
-def write_config_files(agent: str, config: str):
-    """Write config snippet to a file for easy copy-paste."""
-    config_file = INSTALL_DIR / f"config-{agent}.txt"
-    config_file.write_text(config.strip(), encoding="utf-8")
-    return config_file
-
-
-def main():
-    print("🎬 Video Analyzer MCP Server 安装脚本")
+def cmd_install(args):
+    print("🎬 Video Analyzer MCP Server — 安装")
     print("=" * 50)
     
-    # 1. Find kimi-cli
     print("\n1️⃣  检测 kimi-cli...")
     kimi_path, python_path = find_kimi_cli()
     print(f"   ✅ kimi: {kimi_path}")
     print(f"   ✅ python: {python_path}")
     
-    # 2. Check mcp package
     print("\n2️⃣  检测 mcp 包...")
     if check_mcp_installed(python_path):
         print("   ✅ mcp 已安装")
@@ -148,38 +94,113 @@ def main():
             print("   ❌ mcp 安装失败，请手动安装: pip install mcp")
             sys.exit(1)
     
-    # 3. Install files
     print("\n3️⃣  安装代码...")
-    install_files()
-    
-    # 4. Detect agents
-    print("\n4️⃣  检测已安装的 Agent...")
-    agents = detect_agents()
-    if agents:
-        print(f"   ✅ 检测到: {', '.join(agents)}")
+    if is_running_from_repo():
+        print(f"   从 repo 复制到 {INSTALL_DIR}...")
+        copy_files()
+    elif REPO_DIR == INSTALL_DIR:
+        print(f"   已在安装目录，跳过复制")
+        if not (INSTALL_DIR / "install.py").exists():
+            shutil.copy2(REPO_DIR / "install.py", INSTALL_DIR / "install.py")
     else:
-        print("   ⚠️  未检测到已知 Agent，将生成通用配置")
-        agents = ["generic"]
+        copy_files()
     
-    # 5. Generate configs
-    print("\n5️⃣  生成配置...")
-    for agent in agents:
-        config = generate_config(agent, python_path)
-        if config:
-            config_file = write_config_files(agent, config)
-            print(f"   ✅ {agent} 配置已保存到: {config_file}")
-    
-    # 6. Summary
     print("\n" + "=" * 50)
     print("🎉 安装完成!")
     print(f"\n📁 代码位置: {INSTALL_DIR}")
-    print("\n📋 配置方法:")
-    print("   1. 查看上方生成的 config-*.txt 文件")
-    print("   2. 将内容复制到你的 Agent MCP 配置中")
-    print("   3. 重启 Agent")
+    print("\n📋 下一步:")
+    print("   1. 参照 README 配置你的 Agent")
+    print("   2. 重启 Agent")
     print("\n⚠️  重要: 视频分析耗时较长，请确保 MCP timeout >= 300 秒")
-    print("\n🚀 使用方法: 对 Agent 说 '分析这个视频 ~/video.mp4'")
+    print("\n📝 后续更新: python install.py update")
     print("=" * 50)
+
+
+def cmd_update(args):
+    print("🔄 Video Analyzer MCP Server — 更新")
+    print("=" * 50)
+    
+    if not is_installed():
+        print("❌ 尚未安装，请先运行: python install.py install")
+        sys.exit(1)
+    
+    git_dir = INSTALL_DIR / ".git"
+    if not git_dir.exists():
+        print("❌ 安装目录不是 git repo，无法自动更新")
+        print(f"   请手动删除 {INSTALL_DIR} 后重新克隆并安装")
+        sys.exit(1)
+    
+    print("\n1️⃣  从 git 拉取更新...")
+    stdout, stderr, rc = run("git pull", cwd=str(INSTALL_DIR))
+    if rc != 0:
+        print(f"   ❌ git pull 失败:\n{stderr}")
+        sys.exit(1)
+    
+    if "Already up to date" in stdout:
+        print("   ✅ 已经是最新版本")
+    else:
+        print(f"   ✅ 更新成功:\n{stdout}")
+    
+    print("\n2️⃣  重新安装文件...")
+    if is_running_from_repo():
+        copy_files()
+    
+    print("\n" + "=" * 50)
+    print("🎉 更新完成!")
+    print("\n⚠️  请重启你的 Agent 以使更新生效")
+    print("=" * 50)
+
+
+def cmd_uninstall(args):
+    print("🗑️  Video Analyzer MCP Server — 卸载")
+    print("=" * 50)
+    
+    if not is_installed():
+        print("❌ 未找到安装目录，无需卸载")
+        return
+    
+    confirm = input(f"\n确认删除 {INSTALL_DIR} 吗? [y/N]: ")
+    if confirm.lower() != "y":
+        print("已取消")
+        return
+    
+    print(f"\n删除 {INSTALL_DIR}...")
+    shutil.rmtree(INSTALL_DIR)
+    print("✅ 已卸载")
+    
+    print("\n⚠️  请手动从 Agent 配置中删除 video-analyzer 相关配置")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Video Analyzer MCP Server 安装/更新/卸载工具",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+    python install.py install    # 安装
+    python install.py update     # 从 git 更新
+    python install.py uninstall  # 卸载
+    python install.py            # 默认执行 install
+        """
+    )
+    
+    parser.add_argument(
+        "command",
+        nargs="?",
+        default="install",
+        choices=["install", "update", "uninstall"],
+        help="要执行的命令 (默认: install)"
+    )
+    
+    args = parser.parse_args()
+    
+    commands = {
+        "install": cmd_install,
+        "update": cmd_update,
+        "uninstall": cmd_uninstall,
+    }
+    
+    commands[args.command](args)
 
 
 if __name__ == "__main__":

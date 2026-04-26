@@ -9,59 +9,171 @@
 - **动效/动画理解**：录制网页/程序的交互视频，分析 easing、transition、状态变化
 - **动态耗时估算**：根据文件大小自动估算分析时间，不盲目等待
 
-## 安装（一键）
+## 前置依赖
+
+Video Analyzer MCP **依赖 kimi-cli**。安装前请确保已安装：
+
+- **kimi-cli**：https://github.com/MoonshotAI/kimi-cli
+- **Python 3.8+**
+- **Git**
 
 ```bash
-git clone <repo-url> video-analyzer-mcp
-cd video-analyzer-mcp
-python install.py
+# 验证依赖
+kimi --version   # 确认 kimi-cli 已安装
+python3 --version  # 或 python --version
+git --version
 ```
 
-`install.py` 会自动：
+## 安装
+
+### Linux / macOS（Bash）
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/MoonshotAI/video-analyzer-mcp/main/install.sh | bash
+```
+
+### Windows（PowerShell）
+
+```powershell
+irm https://raw.githubusercontent.com/MoonshotAI/video-analyzer-mcp/main/install.ps1 | iex
+```
+
+> 如果执行策略限制，先运行：`Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
+
+### 手动克隆安装
+
+**Linux / macOS:**
+```bash
+git clone https://github.com/MoonshotAI/video-analyzer-mcp.git ~/.mcp/video-analyzer
+cd ~/.mcp/video-analyzer
+python install.py install
+```
+
+**Windows:**
+```powershell
+git clone https://github.com/MoonshotAI/video-analyzer-mcp.git $env:USERPROFILE\.mcp\video-analyzer
+cd $env:USERPROFILE\.mcp\video-analyzer
+python install.py install
+```
+
+安装脚本只做以下事情：
 1. 检测 kimi-cli 和对应的 Python 解释器
-2. 检查/安装 mcp 包
-3. 复制代码到 `~/.mcp/video-analyzer/`
-4. 检测已安装的 Agent（Hermes / Opencode / Claude Desktop）
-5. 生成对应的 MCP 配置片段（保存到 `config-*.txt`）
+2. 检查/安装 `mcp` 包
+3. 复制代码到安装目录
 
-### 手动配置
+**安装脚本不修改任何 Agent 配置文件。** 安装完成后请参照下方"配置"章节手动配置。
 
-安装脚本会生成配置片段，复制到你的 Agent 配置中即可：
+### 更新
 
-**Hermes**（`~/.hermes/config.yaml`）：
-```yaml
-mcp_servers:
-  video-analyzer:
-    command: "<python-path>"
-    args: ["~/.mcp/video-analyzer/server.py"]
-    timeout: 300
+**Linux / macOS:**
+```bash
+cd ~/.mcp/video-analyzer
+python install.py update
 ```
 
-**Opencode**（`~/.opencode/opencode.jsonc`）：
+**Windows:**
+```powershell
+cd $env:USERPROFILE\.mcp\video-analyzer
+python install.py update
+```
+
+这会执行 `git pull` 并重新生成配置。
+
+### 卸载
+
+**Linux / macOS:**
+```bash
+cd ~/.mcp/video-analyzer
+python install.py uninstall
+```
+
+**Windows:**
+```powershell
+cd $env:USERPROFILE\.mcp\video-analyzer
+python install.py uninstall
+```
+
+## 配置
+
+**安装完成后必须手动配置 Agent。** 安装脚本不会修改任何配置文件。
+
+> 配置中的 Python 路径需要指向 kimi-cli 所在环境的 Python。运行 `install.py` 时会自动检测并打印该路径。
+
+### Opencode
+
+**Linux / macOS**（`~/.opencode/opencode.jsonc`）：
 ```jsonc
 {
   "mcp": {
     "video-analyzer": {
       "type": "local",
-      "command": ["<python-path>", "~/.mcp/video-analyzer/server.py"]
+      "command": ["~/.local/share/uv/tools/kimi-cli/bin/python", "~/.mcp/video-analyzer/server.py"]
     }
   }
 }
 ```
 
-**Claude Desktop / Cursor**：
+**Windows**（`%USERPROFILE%\.opencode\opencode.jsonc`）：
+```jsonc
+{
+  "mcp": {
+    "video-analyzer": {
+      "type": "local",
+      "command": ["python", "C:\\Users\\%USERNAME%\\.mcp\\video-analyzer\\server.py"]
+    }
+  }
+}
+```
+
+### Hermes
+
+**Linux / macOS**（`~/.hermes/config.yaml`）：
+```yaml
+mcp_servers:
+  video-analyzer:
+    command: "~/.local/share/uv/tools/kimi-cli/bin/python"
+    args: ["~/.mcp/video-analyzer/server.py"]
+    timeout: 300
+```
+
+**Windows**（`%USERPROFILE%\.hermes\config.yaml`）：
+```yaml
+mcp_servers:
+  video-analyzer:
+    command: "python"
+    args: ["C:\\Users\\%USERNAME%\\.mcp\\video-analyzer\\server.py"]
+    timeout: 300
+```
+
+### Claude Desktop / Cursor
+
+**Linux / macOS**（`claude_desktop_config.json`）：
 ```json
 {
   "mcpServers": {
     "video-analyzer": {
-      "command": "<python-path>",
+      "command": "~/.local/share/uv/tools/kimi-cli/bin/python",
       "args": ["~/.mcp/video-analyzer/server.py"]
     }
   }
 }
 ```
 
-> `<python-path>` 用 `install.py` 检测到的路径，或直接用 `python` 如果 kimi-cli 的 mcp 包在系统 Python 中也可用。
+**Windows**（`claude_desktop_config.json`）：
+```json
+{
+  "mcpServers": {
+    "video-analyzer": {
+      "command": "python",
+      "args": ["C:\\Users\\%USERNAME%\\.mcp\\video-analyzer\\server.py"]
+    }
+  }
+}
+```
+
+### 配置后重启 Agent
+
+**修改配置后必须重启 Agent 才能生效。**
 
 ## 使用示例
 
@@ -200,6 +312,6 @@ mcp_servers:
 ## 开发
 
 ```bash
-cd video-analyzer-mcp
+cd ~/.mcp/video-analyzer
 python -m video_analyzer.server  # 手动启动 MCP server
 ```
