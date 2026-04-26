@@ -55,11 +55,16 @@ function Install-McpServer {
     }
 
     # 4. Clone or update
-    if (Test-Path $InstallDir) {
+    $gitDir = Join-Path $InstallDir ".git"
+    if (Test-Path $gitDir) {
         Write-Info "目录已存在，尝试更新..."
         Push-Location $InstallDir
         git pull
         Pop-Location
+    } elseif (Test-Path $InstallDir) {
+        Write-Warn "安装目录存在但不是 git repo，将重新克隆..."
+        Remove-Item -Recurse -Force $InstallDir
+        git clone $RepoUrl $InstallDir
     } else {
         Write-Info "克隆仓库到 $InstallDir..."
         git clone $RepoUrl $InstallDir

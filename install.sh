@@ -39,6 +39,10 @@ if [ -d "$INSTALL_DIR/.git" ]; then
     info "目录已存在，尝试更新..."
     cd "$INSTALL_DIR"
     git pull
+elif [ -d "$INSTALL_DIR" ]; then
+    warn "安装目录存在但不是 git repo，将重新克隆..."
+    rm -rf "$INSTALL_DIR"
+    git clone "$REPO_URL" "$INSTALL_DIR"
 else
     info "克隆仓库到 $INSTALL_DIR..."
     git clone "$REPO_URL" "$INSTALL_DIR"
