@@ -29,13 +29,13 @@ git --version
 ### Linux / macOS（Bash）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/master/install.sh | bash
 ```
 
 ### Windows（PowerShell）
 
 ```powershell
-irm https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/master/install.ps1 | iex
 ```
 
 > 如果执行策略限制，先运行：`Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
