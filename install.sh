@@ -14,7 +14,7 @@ echo "========================================"
 
 info "检测 Python..."
 PYTHON=""
-for cmd in python3 python; do
+for cmd in python python3; do
     if command -v "$cmd" &>/dev/null && "$cmd" -c "import sys" &>/dev/null 2>&1; then
         PYTHON="$cmd"
         break

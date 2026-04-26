@@ -20,14 +20,18 @@ Write-Host "========================================" -ForegroundColor Cyan
 
 Write-Info "检测 Python..."
 $python = $null
-foreach ($name in @("python3", "python", "py")) {
+foreach ($name in @("python", "python3", "py")) {
     if (Test-Command $name) {
-        $python = (Get-Command $name).Source
-        break
+        $null = & $name -c "import sys" 2>$1
+        if ($?) {
+            $python = (Get-Command $name).Source
+            break
+        }
     }
 }
+
 if (-not $python) {
-    Write-Err "未找到 Python。请先安装 Python 3: https://python.org"
+    Write-Err "未找到可用的 Python 3。请先安装: https://python.org"
     exit 1
 }
 Write-OK "Python: $python"
