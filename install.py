@@ -68,7 +68,7 @@ def copy_files():
             if src.exists():
                 shutil.copy2(src, INSTALL_DIR / f)
     else:
-        for f in ["analyzer.py", "server.py", "cli.py"]:
+        for f in ["analyzer.py", "server.py"]:
             src = REPO_DIR / f
             if src.exists():
                 shutil.copy2(src, INSTALL_DIR / f)

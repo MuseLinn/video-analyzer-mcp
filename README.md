@@ -57,7 +57,7 @@ python install.py install
 ```
 
 安装脚本只做以下事情：
-1. 检测 kimi-cli 和对应的 Python 解释器
+1. 检测系统环境（Python、Git、kimi-cli）
 2. 检查/安装 `mcp` 包
 3. 复制代码到安装目录
 
@@ -109,7 +109,7 @@ python install.py uninstall
 
 **安装完成后必须手动配置 Agent。** 安装脚本不会修改任何配置文件。
 
-> 配置中的 Python 路径需要指向 kimi-cli 所在环境的 Python。运行 `install.py` 时会自动检测并打印该路径。
+> 配置中的 `command` 用系统默认的 `python` 即可（需要有 `mcp` 包）。不需要指向 kimi-cli 的 Python。
 
 ### Opencode
 
@@ -119,7 +119,7 @@ python install.py uninstall
   "mcp": {
     "video-analyzer": {
       "type": "local",
-      "command": ["~/.local/share/uv/tools/kimi-cli/bin/python", "~/.mcp/video-analyzer/server.py"]
+      "command": ["python", "~/.mcp/video-analyzer/server.py"]
     }
   }
 }
@@ -143,7 +143,7 @@ python install.py uninstall
 ```yaml
 mcp_servers:
   video-analyzer:
-    command: "~/.local/share/uv/tools/kimi-cli/bin/python"
+    command: "python"
     args: ["~/.mcp/video-analyzer/server.py"]
     timeout: 300
 ```
@@ -164,7 +164,7 @@ mcp_servers:
 {
   "mcpServers": {
     "video-analyzer": {
-      "command": "~/.local/share/uv/tools/kimi-cli/bin/python",
+      "command": "python",
       "args": ["~/.mcp/video-analyzer/server.py"]
     }
   }
@@ -186,39 +186,6 @@ mcp_servers:
 ### 配置后重启 Agent
 
 **修改配置后必须重启 Agent 才能生效。**
-
-## CLI 工具（不通过 Agent）
-
-安装后可以使用 `cli.py` 直接操作，无需启动 Agent：
-
-```bash
-# 更新 MCP
-python ~/.mcp/video-analyzer/cli.py update
-
-# 卸载 MCP
-python ~/.mcp/video-analyzer/cli.py uninstall
-
-# 直接分析视频（不通过 Agent）
-python ~/.mcp/video-analyzer/cli.py analyze ~/video.mp4 --detail smart
-```
-
-**Windows:**
-```powershell
-python $env:USERPROFILE\.mcp\video-analyzer\cli.py update
-python $env:USERPROFILE\.mcp\video-analyzer\cli.py analyze C:\Users\%USERNAME%\Videos\demo.mp4
-```
-
-可以添加 alias 方便使用：
-
-**Linux / macOS**（添加到 `~/.bashrc` 或 `~/.zshrc`）：
-```bash
-alias video-analyzer="python ~/.mcp/video-analyzer/cli.py"
-```
-
-**Windows**（PowerShell profile）：
-```powershell
-function video-analyzer { python $env:USERPROFILE\.mcp\video-analyzer\cli.py @args }
-```
 
 ## 使用示例
 
