@@ -65,6 +65,20 @@ python install.py install
 
 ### 更新
 
+**最简单的方式：重新运行一键安装命令**（会自动检测并更新）：
+
+**Linux / macOS:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/master/install.sh | bash
+```
+
+**Windows:**
+```powershell
+irm https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/master/install.ps1 | iex
+```
+
+或者手动更新：
+
 **Linux / macOS:**
 ```bash
 cd ~/.mcp/video-analyzer
@@ -76,8 +90,6 @@ python install.py update
 cd $env:USERPROFILE\.mcp\video-analyzer
 python install.py update
 ```
-
-这会执行 `git pull` 并重新生成配置。
 
 ### 卸载
 
@@ -174,6 +186,39 @@ mcp_servers:
 ### 配置后重启 Agent
 
 **修改配置后必须重启 Agent 才能生效。**
+
+## CLI 工具（不通过 Agent）
+
+安装后可以使用 `cli.py` 直接操作，无需启动 Agent：
+
+```bash
+# 更新 MCP
+python ~/.mcp/video-analyzer/cli.py update
+
+# 卸载 MCP
+python ~/.mcp/video-analyzer/cli.py uninstall
+
+# 直接分析视频（不通过 Agent）
+python ~/.mcp/video-analyzer/cli.py analyze ~/video.mp4 --detail smart
+```
+
+**Windows:**
+```powershell
+python $env:USERPROFILE\.mcp\video-analyzer\cli.py update
+python $env:USERPROFILE\.mcp\video-analyzer\cli.py analyze C:\Users\%USERNAME%\Videos\demo.mp4
+```
+
+可以添加 alias 方便使用：
+
+**Linux / macOS**（添加到 `~/.bashrc` 或 `~/.zshrc`）：
+```bash
+alias video-analyzer="python ~/.mcp/video-analyzer/cli.py"
+```
+
+**Windows**（PowerShell profile）：
+```powershell
+function video-analyzer { python $env:USERPROFILE\.mcp\video-analyzer\cli.py @args }
+```
 
 ## 使用示例
 

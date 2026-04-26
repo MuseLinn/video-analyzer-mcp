@@ -68,11 +68,11 @@ def copy_files():
             if src.exists():
                 shutil.copy2(src, INSTALL_DIR / f)
     else:
-        for f in ["analyzer.py", "server.py"]:
+        for f in ["analyzer.py", "server.py", "cli.py"]:
             src = REPO_DIR / f
             if src.exists():
                 shutil.copy2(src, INSTALL_DIR / f)
-    
+
     shutil.copy2(REPO_DIR / "install.py", INSTALL_DIR / "install.py")
     print(f"✅ 代码已安装到: {INSTALL_DIR}")
 
