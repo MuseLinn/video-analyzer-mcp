@@ -13,20 +13,34 @@ info "Video Analyzer MCP Server — 安装"
 echo "========================================"
 
 info "检测 Python..."
-if ! command -v python3 &>/dev/null && ! command -v python &>/dev/null; then
-    err "未找到 Python。请先安装 Python 3: https://python.org"
+PYTHON=""
+for cmd in python3 python; do
+    if command -v "$cmd" &>/dev/null && "$cmd" -c "import sys" &>/dev/null 2>&1; then
+        PYTHON="$cmd"
+        break
+    fi
+done
+
+if [ -z "$PYTHON" ]; then
+    err "未找到可用的 Python 3。请先安装: https://python.org"
     exit 1
 fi
-PYTHON=$(command -v python3 || command -v python)
-ok "Python: $PYTHON"
+ok "Python: $(command -v "$PYTHON")"
 
 info "检测 mcp 包..."
-if "$PYTHON" -c "import mcp" 2>/dev/null; then
+if "$PYTHON" -c "import mcp" &>/dev/null 2>&1; then
     ok "mcp 已安装"
 else
     warn "mcp 未安装，尝试安装..."
-    if ! "$PYTHON" -m pip install mcp 2>/dev/null; then
-        err "mcp 安装失败，请手动安装: pip install mcp"
+    if ! "$PYTHON" -m pip install mcp; then
+        err "mcp 安装失败"
+        echo ""
+        echo "可能的原因："
+        echo "  1. pip 未安装: $PYTHON -m ensurepip --upgrade"
+        echo "  2. 权限问题: 尝试用虚拟环境"
+        echo "  3. 网络问题: 检查网络连接"
+        echo ""
+        echo "或者手动安装: $PYTHON -m pip install mcp"
         exit 1
     fi
     ok "mcp 安装成功"
