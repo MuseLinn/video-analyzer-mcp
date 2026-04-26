@@ -34,7 +34,24 @@ def find_kimi_cli():
         sys.exit(1)
     
     kimi_path = Path(kimi_path).resolve()
-    python_path = kimi_path.parent.parent / "bin" / "python"
+    # Try uv standard path first
+    # Linux/macOS: ~/.local/share/uv/tools/kimi-cli/bin/python
+    # Windows:      ...\uv\tools\kimi-cli\Scripts\python.exe
+    candidates = [
+        kimi_path.parent.parent / "bin" / "python",
+        kimi_path.parent.parent / "Scripts" / "python.exe",
+    ]
+    python_path = None
+    for c in candidates:
+        if c.exists():
+            python_path = c
+            break
+    
+    if python_path is None:
+        # Fallback: use the Python currently running this script
+        # This is often the correct one (e.g. Miniconda)
+        python_path = Path(sys.executable)
+    
     if not python_path.exists():
         python_path = Path(shutil.which("python3") or shutil.which("python"))
     
