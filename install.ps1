@@ -19,33 +19,25 @@ Write-Info "Video Analyzer MCP Server — 安装"
 Write-Host "========================================" -ForegroundColor Cyan
 
 Write-Info "检测 Python..."
-$python = $null
-foreach ($name in @("python", "python3", "py")) {
-    if (Test-Command $name) {
-        $null = & $name -c "import sys" 2>$1
-        if ($?) {
-            $python = (Get-Command $name).Source
-            break
-        }
-    }
-}
-
-if (-not $python) {
-    Write-Err "未找到可用的 Python 3。请先安装: https://python.org"
+if (-not (Test-Command "python")) {
+    Write-Err "未找到 python 命令。请先安装 Python 3: https://python.org"
     exit 1
 }
+$python = (Get-Command python).Source
 Write-OK "Python: $python"
 
 Write-Info "检测 mcp 包..."
-$hasMcp = & $python -c "import mcp" 2>$null
-if ($hasMcp) {
+try {
+    & $python -c "import mcp" 2>$null
     Write-OK "mcp 已安装"
-} else {
+} catch {
     Write-Warn "mcp 未安装，尝试安装..."
-    & $python -m pip install mcp | Out-Null
-    $hasMcp = & $python -c "import mcp" 2>$null
-    if (-not $hasMcp) {
-        Write-Err "mcp 安装失败，请手动安装: pip install mcp"
+    & $python -m pip install mcp
+    if ($LASTEXITCODE -ne 0) {
+        Write-Err "mcp 安装失败"
+        Write-Host ""
+        Write-Host "请手动运行以下命令安装:"
+        Write-Host "  $python -m pip install mcp"
         exit 1
     }
     Write-OK "mcp 安装成功"
