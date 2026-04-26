@@ -27,20 +27,18 @@ $python = (Get-Command python).Source
 Write-OK "Python: $python"
 
 Write-Info "检测 mcp 包..."
-try {
-    & $python -c "import mcp" 2>$null
+& $python -c "import mcp" 2>$null
+if ($LASTEXITCODE -eq 0) {
     Write-OK "mcp 已安装"
-} catch {
+} else {
     Write-Warn "mcp 未安装，尝试安装..."
     & $python -m pip install mcp
-    if ($LASTEXITCODE -ne 0) {
+    if ($LASTEXITCODE -eq 0) {
+        Write-OK "mcp 安装成功"
+    } else {
         Write-Err "mcp 安装失败"
-        Write-Host ""
-        Write-Host "请手动运行以下命令安装:"
-        Write-Host "  $python -m pip install mcp"
         exit 1
     }
-    Write-OK "mcp 安装成功"
 }
 
 Write-Info "检测 git..."
