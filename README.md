@@ -93,6 +93,20 @@ python install.py update
 
 ### 卸载
 
+**一行命令卸载（无需确认）：**
+
+**Linux / macOS:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/master/uninstall.sh | bash
+```
+
+**Windows:**
+```powershell
+irm https://raw.githubusercontent.com/MuseLinn/video-analyzer-mcp/master/uninstall.ps1 | iex
+```
+
+或者手动卸载：
+
 **Linux / macOS:**
 ```bash
 cd ~/.mcp/video-analyzer
