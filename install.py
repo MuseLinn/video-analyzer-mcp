@@ -26,41 +26,28 @@ def run(cmd, **kwargs):
     return result.stdout.strip(), result.stderr.strip(), result.returncode
 
 
-def find_kimi_cli():
+def check_kimi():
     kimi_path = shutil.which("kimi")
     if not kimi_path:
         print("❌ 错误: 未找到 kimi 命令。请先安装 kimi-cli:")
         print("   https://github.com/MoonshotAI/kimi-cli")
         sys.exit(1)
-    
-    kimi_path = Path(kimi_path).resolve()
-    # Try uv standard path first
-    # Linux/macOS: ~/.local/share/uv/tools/kimi-cli/bin/python
-    # Windows:      ...\uv\tools\kimi-cli\Scripts\python.exe
-    candidates = [
-        kimi_path.parent.parent / "bin" / "python",
-        kimi_path.parent.parent / "Scripts" / "python.exe",
-    ]
-    python_path = None
-    for c in candidates:
-        if c.exists():
-            python_path = c
-            break
-    
-    if python_path is None:
-        # Fallback: use the Python currently running this script
-        # This is often the correct one (e.g. Miniconda)
-        python_path = Path(sys.executable)
-    
-    if not python_path.exists():
-        python_path = Path(shutil.which("python3") or shutil.which("python"))
-    
-    return str(kimi_path), str(python_path)
+    return str(Path(kimi_path).resolve())
 
 
-def check_mcp_installed(python_path):
-    stdout, stderr, rc = run(f'"{python_path}" -c "import mcp; print(mcp.__file__)"')
-    return rc == 0
+def find_mcp_python():
+    candidates = [Path(sys.executable)]
+    for name in ("python3", "python"):
+        p = shutil.which(name)
+        if p:
+            candidates.append(Path(p))
+
+    for python_path in candidates:
+        stdout, stderr, rc = run(f'"{python_path}" -c "import mcp; print(mcp.__file__)"')
+        if rc == 0:
+            return str(python_path)
+
+    return None
 
 
 def is_installed():
@@ -93,19 +80,26 @@ def copy_files():
 def cmd_install(args):
     print("🎬 Video Analyzer MCP Server — 安装")
     print("=" * 50)
-    
+
     print("\n1️⃣  检测 kimi-cli...")
-    kimi_path, python_path = find_kimi_cli()
+    kimi_path = check_kimi()
     print(f"   ✅ kimi: {kimi_path}")
-    print(f"   ✅ python: {python_path}")
-    
-    print("\n2️⃣  检测 mcp 包...")
-    if check_mcp_installed(python_path):
+
+    print("\n2️⃣  检测 Python + mcp...")
+    python_path = find_mcp_python()
+    if python_path:
+        print(f"   ✅ python: {python_path}")
         print("   ✅ mcp 已安装")
     else:
         print("   ⚠️  mcp 未安装，尝试安装...")
+        python_path = shutil.which("python3") or shutil.which("python")
+        if not python_path:
+            print("   ❌ 未找到可用的 Python")
+            sys.exit(1)
         run(f'"{python_path}" -m pip install mcp')
-        if check_mcp_installed(python_path):
+        python_path = find_mcp_python()
+        if python_path:
+            print(f"   ✅ python: {python_path}")
             print("   ✅ mcp 安装成功")
         else:
             print("   ❌ mcp 安装失败，请手动安装: pip install mcp")
